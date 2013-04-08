@@ -2,12 +2,12 @@ package org.balote.downloader.manager;
 
 import java.util.ArrayList;
 
-import org.balote.downloader.api.IDownloadObserver;
 import org.balote.downloader.db.RetryDownloadsDao;
 import org.balote.downloader.manager.api.IDownloadManager;
 import org.balote.downloader.manager.api.IDownloadManagerObserver;
 import org.balote.downloader.models.api.IDownloadDataModel;
 import org.balote.downloader.runnable.DownloaderRunnable;
+import org.balote.downloader.runnable.api.IDownloadObserver;
 import org.balote.downloader.runnable.api.IDownloaderRunnable;
 
 import android.content.Context;

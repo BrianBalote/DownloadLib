@@ -1,4 +1,4 @@
-package org.balote.downloader.api;
+package org.balote.downloader.runnable.api;
 
 public interface IDownloadObservee {
 

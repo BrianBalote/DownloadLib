@@ -9,10 +9,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-import org.balote.downloader.api.IDownloadObservee;
-import org.balote.downloader.api.IDownloadObserver;
-import org.balote.downloader.api.IDownloadStatesDescriptor;
 import org.balote.downloader.models.api.IDownloadDataModel;
+import org.balote.downloader.runnable.api.IDownloadObservee;
+import org.balote.downloader.runnable.api.IDownloadObserver;
+import org.balote.downloader.runnable.api.IDownloadStatesDescriptor;
 import org.balote.downloader.runnable.api.IDownloaderRunnable;
 
 import android.util.Log;

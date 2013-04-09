@@ -28,7 +28,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 		dao = new RetryDownloadsDao(context);
 	}
 
-	public static DownloadManager getInstant(Context context) {
+	public static DownloadManager getInstance(Context context) {
 		if (_instance == null) {
 			_instance = new DownloadManager(context);
 		}
@@ -52,11 +52,11 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	}
 
 	@Override
-	public void retryFailedDownloads(Context context) {
+	public void retryFailedDownloads() {
 
 		dao.read();
-
 		ArrayList<IDownloadDataModel> retryList = dao.getDownloadDataList();
+		dao.close();
 
 		for (IDownloadDataModel d : retryList) {
 
@@ -65,15 +65,12 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 					d.obtainDownloadContentType());
 
 			downloaderRunnable.registerObserver(_instance);
-
 			new Thread(downloaderRunnable).start();
-
 			downloaders.add(downloaderRunnable);
 		}
 
 		isDownloadingPaused = false;
 		isDownloadingTerminated = false;
-
 	}
 
 	public void testPauseForDownloads() {
@@ -111,7 +108,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 					"onNotifyDownloadSuccess() exception when deleting from db");
 		}
 
-		notifySuccessfulDownload();
+		notifySuccessfulDownload(url);
 	}
 
 	@Override
@@ -129,7 +126,14 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 					"onNotifyDownloadFailure() exception when inserting to db");
 		}
 
-		notifyFailedDownload();
+		notifyFailedDownload(fileUrl);
+	}
+
+	@Override
+	public void onNotifyFileAlreadyExist(String url) {
+		for (IDownloadManagerObserver o : observers) {
+			o.onNotifyFileAlreadyExist(url);
+		}
 	}
 
 	@Override
@@ -141,7 +145,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 			r.terminate();
 		}
-		
+
 		isDownloadingPaused = false;
 		isDownloadingTerminated = true;
 
@@ -154,7 +158,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	public void setIsDownloadingPaused(boolean isDownloadingPaused) {
 		this.isDownloadingPaused = isDownloadingPaused;
 	}
-	
+
 	public boolean isDownloadingTerminated() {
 		return isDownloadingTerminated;
 	}
@@ -181,29 +185,31 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	}
 
 	@Override
-	public void notifySuccessfulDownload() {
+	public void notifySuccessfulDownload(String url) {
 		for (IDownloadManagerObserver o : observers) {
-			o.onNotifyDownloadSuccess();
+			o.onNotifyDownloadSuccess(url);
 		}
 	}
 
 	@Override
-	public void notifyFailedDownload() {
+	public void notifyFailedDownload(String url) {
 		for (IDownloadManagerObserver o : observers) {
-			o.onNotifyDownloadFailed();
+			o.onNotifyDownloadFailed(url);
 		}
 	}
 
 	@Override
-	public void onNotifyFileAlreadyExist() {
+	public void notifyFileAlreadyExist(String url) {
 		for (IDownloadManagerObserver o : observers) {
-			o.onNotifyFileAlreadyExist();
+			o.onNotifyFileAlreadyExist(url);
 		}
+
 	}
 
 	@Override
 	public void destroy() {
-		
+
 		// TODO cleanup
 	}
+
 }

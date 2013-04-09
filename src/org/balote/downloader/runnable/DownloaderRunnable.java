@@ -7,18 +7,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Date;
 import java.util.ArrayList;
 
 import org.balote.downloader.models.api.IDownloadDataModel;
 import org.balote.downloader.runnable.api.IDownloadObservee;
 import org.balote.downloader.runnable.api.IDownloadObserver;
-import org.balote.downloader.runnable.api.IDownloadStatesDescriptor;
 import org.balote.downloader.runnable.api.IDownloaderRunnable;
 
 import android.util.Log;
 
-public class DownloaderRunnable implements IDownloadStatesDescriptor,
-		IDownloadObservee, IDownloaderRunnable {
+public class DownloaderRunnable implements IDownloadObservee,
+		IDownloaderRunnable {
 
 	private static final String TAG = "DownloaderRunnable";
 
@@ -127,14 +127,14 @@ public class DownloaderRunnable implements IDownloadStatesDescriptor,
 
 					byte[] data = new byte[1024000];
 					int x = 0;
+
+					Date startTime = new Date(System.currentTimeMillis());
+
 					while ((x = in.read(data, 0, 1024000)) >= 0 && !isPaused
 							&& !isTerminated) {
 
 						bout.write(data, 0, x);
 						downloadedFileLength += x;
-
-						Log.w(TAG, "run() download file length: "
-								+ downloadedFileLength);
 
 					}
 
@@ -143,6 +143,15 @@ public class DownloaderRunnable implements IDownloadStatesDescriptor,
 						Log.d(TAG, "run() is done? " + isDone);
 
 						notifySuccessfulDownload();
+
+						Date endTime = new Date(System.currentTimeMillis());
+
+						long timeToCompleteDownload = endTime.getTime()
+								- startTime.getTime();
+
+						Log.i(TAG, "time to complete download: "
+								+ timeToCompleteDownload / 1000 + " seconds...");
+						Log.i(TAG, "file size: " + contentLength / 1048576 + "mb");
 					}
 				}
 
@@ -319,9 +328,9 @@ public class DownloaderRunnable implements IDownloadStatesDescriptor,
 	public void notifyFileAlreadyExist() {
 
 		Log.w(TAG, "notifyFileAlreadyExist()");
-		
+
 		for (IDownloadObserver o : observers) {
-			o.onNotifyFileAlreadyExist();
+			o.onNotifyFileAlreadyExist(fileUrl);
 		}
 
 	}

@@ -7,5 +7,5 @@ public interface IDownloadObserver {
 	public void onNotifyDownloadFailure(String fileUrl, String filePath,
 			String contentType);
 
-	public void onNotifyFileAlreadyExist();
+	public void onNotifyFileAlreadyExist(String url);
 }

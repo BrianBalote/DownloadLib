@@ -22,7 +22,7 @@ public interface IDownloadManager {
 
 	public void notifyFailedDownload(String url);
 
-	public void notifyFileAlreadyExist(String url);
+	public void notifyFileAlreadyFinishedDownloading(String url);
 
 	public void destroy();
 }

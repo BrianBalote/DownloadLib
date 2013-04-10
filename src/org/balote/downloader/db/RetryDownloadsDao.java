@@ -6,12 +6,12 @@ import org.balote.downloader.db.api.IRetryDownloadsDao;
 import org.balote.downloader.models.DownloadDataModel;
 import org.balote.downloader.models.api.IDownloadDataModel;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 public class RetryDownloadsDao implements IRetryDownloadsDao {
@@ -82,8 +82,8 @@ public class RetryDownloadsDao implements IRetryDownloadsDao {
 					d.setContentType(c.getString(c
 							.getColumnIndex(RetryDownloadsDbConstants.FIELD_CONTENT_TYPE)));
 
-					long resumableValue = c
-							.getLong(c
+					int resumableValue = c
+							.getInt(c
 									.getColumnIndex(RetryDownloadsDbConstants.FIELD_IS_RESUMABLE));
 
 					if (resumableValue == 0) {
@@ -108,24 +108,21 @@ public class RetryDownloadsDao implements IRetryDownloadsDao {
 
 		Log.i(TAG, "insertDownloadData()");
 
-		SQLiteStatement s = db
-				.compileStatement(RetryDownloadsDbConstants.INSERT_RETRY_DOWNLOAD_DATA_SQL_STATEMENT);
+		ContentValues cv = new ContentValues();
+		cv.put(RetryDownloadsDbConstants.FIELD_DOWNLOAD_URL,
+				d.obtainDownloadUrl());
+		cv.put(RetryDownloadsDbConstants.FIELD_FILE_PATH,
+				d.obtainDownloadFilePath());
+		cv.put(RetryDownloadsDbConstants.FIELD_CONTENT_TYPE,
+				d.obtainDownloadContentType());
+		cv.put(RetryDownloadsDbConstants.FIELD_IS_RESUMABLE,
+				d.checkIfResumableInt());
 
-		long longResumable = 0;
+		boolean isInsertSuccessful = db.insert(
+				RetryDownloadsDbConstants.TABLE_NAME, null, cv) > 0;
 
-		if (d.checkIfResumable()) {
-			longResumable = 1;
-		}
-
-		db.beginTransaction();
-
-		s.bindString(1, d.obtainDownloadUrl());
-		s.bindString(2, d.obtainDownloadFilePath());
-		s.bindString(3, d.obtainDownloadContentType());
-		s.bindLong(4, longResumable);
-
-		db.setTransactionSuccessful();
-		db.endTransaction();
+		Log.d(TAG, "insertDownloadData() is insert successful: "
+				+ isInsertSuccessful);
 	}
 
 	@Override
@@ -134,37 +131,38 @@ public class RetryDownloadsDao implements IRetryDownloadsDao {
 
 		Log.i(TAG, "insertDownloadData()");
 
-		SQLiteStatement s = db
-				.compileStatement(RetryDownloadsDbConstants.INSERT_RETRY_DOWNLOAD_DATA_SQL_STATEMENT);
-
-		long longResumable = 0;
+		int isResumableInt = 0;
 
 		if (isResumable) {
-			longResumable = 1;
+			isResumableInt = 1;
 		}
 
-		db.beginTransaction();
+		ContentValues cv = new ContentValues();
+		cv.put(RetryDownloadsDbConstants.FIELD_DOWNLOAD_URL, fileUrl);
+		cv.put(RetryDownloadsDbConstants.FIELD_FILE_PATH, filePath);
+		cv.put(RetryDownloadsDbConstants.FIELD_CONTENT_TYPE, contentType);
+		cv.put(RetryDownloadsDbConstants.FIELD_IS_RESUMABLE, isResumableInt);
 
-		s.bindString(1, fileUrl);
-		s.bindString(2, filePath);
-		s.bindString(3, contentType);
-		s.bindLong(4, longResumable);
+		boolean isInsertSuccessful = db.insert(
+				RetryDownloadsDbConstants.TABLE_NAME, null, cv) > 0;
 
-		db.setTransactionSuccessful();
-		db.endTransaction();
-
+		Log.d(TAG, "insertDownloadData() is insert successful: "
+				+ isInsertSuccessful);
 	}
 
 	@Override
 	public boolean deleteDownloadData(IDownloadDataModel d)
 			throws SQLiteException {
 
-		Log.i(TAG, "deleteDownloadData()");
+		Log.w(TAG, "deleteDownloadData()");
 
 		boolean isDeleteSuccessful = db.delete(
 				RetryDownloadsDbConstants.TABLE_NAME,
 				RetryDownloadsDbConstants.FIELD_DOWNLOAD_URL + "=?",
 				new String[] { d.obtainDownloadUrl() }) > 0;
+
+		Log.d(TAG, "deleteDownloadData() is delete successful: "
+				+ isDeleteSuccessful);
 
 		return isDeleteSuccessful;
 	}
@@ -172,12 +170,15 @@ public class RetryDownloadsDao implements IRetryDownloadsDao {
 	@Override
 	public boolean deleteDownloadData(String url) throws SQLiteException {
 
-		Log.i(TAG, "deleteDownloadData()");
+		Log.w(TAG, "deleteDownloadData()");
 
 		boolean isDeleteSuccessful = db.delete(
 				RetryDownloadsDbConstants.TABLE_NAME,
 				RetryDownloadsDbConstants.FIELD_DOWNLOAD_URL + "=?",
 				new String[] { url }) > 0;
+
+		Log.d(TAG, "deleteDownloadData() is delete successful: "
+				+ isDeleteSuccessful);
 
 		return isDeleteSuccessful;
 	}

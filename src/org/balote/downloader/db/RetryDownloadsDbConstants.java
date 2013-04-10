@@ -12,22 +12,10 @@ public final class RetryDownloadsDbConstants {
 	public final static String SQL_CREATE_ENTRIES = "CREATE TABLE "
 			+ TABLE_NAME + " ( id INTEGER PRIMARY KEY," + FIELD_DOWNLOAD_URL
 			+ " TEXT," + FIELD_FILE_PATH + " TEXT," + FIELD_CONTENT_TYPE
-			+ " TEXT," + FIELD_IS_RESUMABLE + " LONG" + " )";
+			+ " TEXT," + FIELD_IS_RESUMABLE + " INTEGER" + " )";
 
 	public final static String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS "
 			+ TABLE_NAME;
-
-	public final static String INSERT_RETRY_DOWNLOAD_DATA_SQL_STATEMENT = "INSERT INTO "
-			+ TABLE_NAME
-			+ "("
-			+ FIELD_DOWNLOAD_URL
-			+ ", "
-			+ FIELD_FILE_PATH
-			+ ", "
-			+ FIELD_CONTENT_TYPE
-			+ ", "
-			+ FIELD_IS_RESUMABLE
-			+ " ) VALUES (?, ?, ?, ?)";
 
 	private RetryDownloadsDbConstants() {
 	}

@@ -3,8 +3,6 @@ package org.balote.downloader.manager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.balote.downloader.db.RetryDownloadsDao;
 import org.balote.downloader.db.exceptions.FileIsAlreadyDownloadingException;
@@ -44,6 +42,8 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	public void initiateSingleDownload(String fileUrl, String filePath,
 			String contentType) throws FileIsAlreadyDownloadingException {
 
+		Log.i(TAG, "initiateSingleDownload()");
+
 		if (!downloaders.containsKey(fileUrl)) {
 
 			DownloaderRunnable downloaderRunnable = new DownloaderRunnable(
@@ -70,10 +70,14 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	@Override
 	public void retryFailedDownloads() {
 
+		Log.w(TAG, "retryFailedDownloads()");
+
 		dao.read();
 		ArrayList<IDownloadDataModel> retryList = dao.getDownloadDataList();
 		dao.close();
 
+		Log.i(TAG, "retryFailedDownloads() retry list size: " + retryList.size());
+		
 		for (IDownloadDataModel d : retryList) {
 
 			DownloaderRunnable downloaderRunnable = new DownloaderRunnable(
@@ -91,33 +95,46 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 	public void testPauseForDownloads() {
 
-		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
-				.iterator();
-		while (i.hasNext()) {
+		Log.d(TAG, "testPauseForDownloads()");
 
-			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
-					.next();
-			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
-			r.pauseDueToException();
+		for (Iterator<String> it = downloaders.keySet().iterator(); it
+				.hasNext();) {
+
+			String key = it.next();
+			downloaders.get(key).pauseDueToException();
 		}
 
 		isDownloadingPaused = true;
-
 	}
 
 	public void testResumeForDownloads() {
 
-		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
-				.iterator();
-		while (i.hasNext()) {
+		Log.d(TAG, "testResumeForDownloads()");
 
-			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
-					.next();
-			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
-			r.resumeDownload();
+		for (Iterator<String> it = downloaders.keySet().iterator(); it
+				.hasNext();) {
+
+			String key = it.next();
+			downloaders.get(key).resumeDownload();
 		}
 
 		isDownloadingPaused = false;
+	}
+
+	@Override
+	public void terminateRunnables() {
+
+		Log.w(TAG, "terminateRunnables()");
+
+		for (Iterator<String> it = downloaders.keySet().iterator(); it
+				.hasNext();) {
+
+			String key = it.next();
+			downloaders.get(key).terminate();
+		}
+
+		isDownloadingTerminated = true;
+
 	}
 
 	@Override
@@ -141,7 +158,8 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	public void onNotifyDownloadFailure(String fileUrl, String filePath,
 			String contentType) {
 
-		Log.d(TAG, "onNotifyDownloadFailure()");
+		Log.w(TAG, "onNotifyDownloadFailure()");
+		Log.i(TAG, "onNotifyDownloadFailure() fileUrl: " + fileUrl);
 
 		try {
 			dao.open();
@@ -160,26 +178,6 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 		for (IDownloadManagerObserver o : observers) {
 			o.onNotifyFileAlreadyFinishedDownloading(url);
 		}
-	}
-
-	@Override
-	public void terminateRunnables() {
-
-		Log.w(TAG, "terminateRunnables()");
-
-		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
-				.iterator();
-		while (i.hasNext()) {
-
-			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
-					.next();
-			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
-			r.terminate();
-		}
-
-		isDownloadingPaused = false;
-		isDownloadingTerminated = true;
-
 	}
 
 	public boolean isDownloadingPaused() {
@@ -210,9 +208,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 	@Override
 	public void removeAllObservers() {
-		for (IDownloadManagerObserver o : observers) {
-			observers.remove(o);
-		}
+		observers.clear();
 	}
 
 	@Override
@@ -245,7 +241,10 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	@Override
 	public void destroy() {
 
-		// TODO cleanup
+		downloaders.clear();
+		observers.clear();
+
+		dao = null;
 	}
 
 }

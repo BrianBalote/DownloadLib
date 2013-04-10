@@ -9,4 +9,6 @@ public interface IDownloadDataModel {
 	public String obtainDownloadContentType();
 
 	public boolean checkIfResumable();
+	
+	public int checkIfResumableInt();
 }

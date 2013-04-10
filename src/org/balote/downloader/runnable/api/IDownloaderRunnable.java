@@ -9,4 +9,6 @@ public interface IDownloaderRunnable extends Runnable {
 	public void resumeDownload();
 	
 	public void terminate();
+	
+	public boolean isStillRunning();
 }

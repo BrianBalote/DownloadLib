@@ -36,7 +36,7 @@ public class DownloadDataModel implements IDownloadDataModel, Serializable {
 	public String getFilePath() {
 		return filePath;
 	}
- 
+
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
@@ -75,6 +75,15 @@ public class DownloadDataModel implements IDownloadDataModel, Serializable {
 	@Override
 	public boolean checkIfResumable() {
 		return isResumable();
+	}
+
+	@Override
+	public int checkIfResumableInt() {
+
+		if (isResumable) {
+			return 1;
+		}
+		return 0;
 	}
 
 }

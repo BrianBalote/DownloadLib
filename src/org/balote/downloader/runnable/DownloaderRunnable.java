@@ -111,7 +111,7 @@ public class DownloaderRunnable implements IDownloadObservee,
 
 				if (contentLength == downloadedFileLength) {
 
-					terminate();
+					isTerminated = true;
 					notifyFileAlreadyFinishedDownloading();
 
 				} else {
@@ -151,18 +151,17 @@ public class DownloaderRunnable implements IDownloadObservee,
 
 						Log.i(TAG, "time to complete download: "
 								+ timeToCompleteDownload / 1000 + " seconds...");
-						Log.i(TAG, "file size: " + contentLength / 1048576 + "mb");
+						Log.i(TAG, "file size: " + contentLength / 1048576
+								+ "mb");
 					}
 				}
 
 			} catch (IOException e) {
 				e.printStackTrace();
 				terminate();
-				notifyFailedDownload();
 			} catch (Exception e) {
 				e.printStackTrace();
 				terminate();
-				notifyFailedDownload();
 			} finally {
 				conn.disconnect();
 			}
@@ -174,7 +173,6 @@ public class DownloaderRunnable implements IDownloadObservee,
 						pauseLock.wait();
 					} catch (InterruptedException e) {
 						terminate();
-						notifyFailedDownload();
 						e.printStackTrace();
 					}
 				}
@@ -185,7 +183,6 @@ public class DownloaderRunnable implements IDownloadObservee,
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				terminate();
-				notifyFailedDownload();
 				e.printStackTrace();
 			}
 
@@ -208,6 +205,8 @@ public class DownloaderRunnable implements IDownloadObservee,
 
 		removeAllObservers();
 	}
+	
+	
 
 	@Override
 	public void terminate() {
@@ -215,6 +214,7 @@ public class DownloaderRunnable implements IDownloadObservee,
 		Log.w(TAG, "terminate()");
 
 		isTerminated = true;
+		notifyFailedDownload();
 	}
 
 	@Override
@@ -333,6 +333,16 @@ public class DownloaderRunnable implements IDownloadObservee,
 			o.onNotifyFileAlreadyExist(fileUrl);
 		}
 
+	}
+
+	@Override
+	public boolean isStillRunning() {
+
+		if (!isDone && !isTerminated) {
+			return true;
+		}
+
+		return false;
 	}
 
 }

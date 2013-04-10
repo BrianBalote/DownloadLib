@@ -1,8 +1,13 @@
 package org.balote.downloader.manager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.balote.downloader.db.RetryDownloadsDao;
+import org.balote.downloader.db.exceptions.FileIsAlreadyDownloadingException;
 import org.balote.downloader.manager.api.IDownloadManager;
 import org.balote.downloader.manager.api.IDownloadManagerObserver;
 import org.balote.downloader.models.api.IDownloadDataModel;
@@ -18,8 +23,8 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	private static final String TAG = "DownloadManager";
 	private static DownloadManager _instance = null;
 	private static RetryDownloadsDao dao = null;
-	private static ArrayList<IDownloaderRunnable> downloaders = new ArrayList<IDownloaderRunnable>();
 	private static ArrayList<IDownloadManagerObserver> observers = new ArrayList<IDownloadManagerObserver>();
+	private static HashMap<String, IDownloaderRunnable> downloaders = new HashMap<String, IDownloaderRunnable>();
 
 	private boolean isDownloadingPaused = true;
 	private boolean isDownloadingTerminated = false;
@@ -37,18 +42,29 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 	@Override
 	public void initiateSingleDownload(String fileUrl, String filePath,
-			String contentType) {
+			String contentType) throws FileIsAlreadyDownloadingException {
 
-		DownloaderRunnable downloaderRunnable = new DownloaderRunnable(fileUrl,
-				filePath, contentType);
+		if (!downloaders.containsKey(fileUrl)) {
 
-		downloaderRunnable.registerObserver(_instance);
+			DownloaderRunnable downloaderRunnable = new DownloaderRunnable(
+					fileUrl, filePath, contentType);
 
-		new Thread(downloaderRunnable).start();
+			downloaderRunnable.registerObserver(_instance);
+			new Thread(downloaderRunnable).start();
+			downloaders.put(fileUrl, downloaderRunnable);
 
-		downloaders.add(downloaderRunnable);
+			isDownloadingPaused = false;
 
-		isDownloadingPaused = false;
+		} else {
+
+			try {
+				throw new FileIsAlreadyDownloadingException();
+			} catch (Exception e) {
+				Log.w(TAG,
+						"org.balote.downloader.DownloadManager: already downloading "
+								+ fileUrl);
+			}
+		}
 	}
 
 	@Override
@@ -66,7 +82,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 			downloaderRunnable.registerObserver(_instance);
 			new Thread(downloaderRunnable).start();
-			downloaders.add(downloaderRunnable);
+			downloaders.put(d.obtainDownloadUrl(), downloaderRunnable);
 		}
 
 		isDownloadingPaused = false;
@@ -75,8 +91,13 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 	public void testPauseForDownloads() {
 
-		for (IDownloaderRunnable r : downloaders) {
+		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
+				.iterator();
+		while (i.hasNext()) {
 
+			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
+					.next();
+			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
 			r.pauseDueToException();
 		}
 
@@ -86,8 +107,13 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 	public void testResumeForDownloads() {
 
-		for (IDownloaderRunnable r : downloaders) {
+		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
+				.iterator();
+		while (i.hasNext()) {
 
+			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
+					.next();
+			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
 			r.resumeDownload();
 		}
 
@@ -132,7 +158,7 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 	@Override
 	public void onNotifyFileAlreadyExist(String url) {
 		for (IDownloadManagerObserver o : observers) {
-			o.onNotifyFileAlreadyExist(url);
+			o.onNotifyFileAlreadyFinishedDownloading(url);
 		}
 	}
 
@@ -141,8 +167,13 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 
 		Log.w(TAG, "terminateRunnables()");
 
-		for (IDownloaderRunnable r : downloaders) {
+		Iterator<Entry<String, IDownloaderRunnable>> i = downloaders.entrySet()
+				.iterator();
+		while (i.hasNext()) {
 
+			Map.Entry<String, IDownloaderRunnable> pair = (Map.Entry<String, IDownloaderRunnable>) i
+					.next();
+			IDownloaderRunnable r = (IDownloaderRunnable) pair.getValue();
 			r.terminate();
 		}
 
@@ -189,6 +220,8 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 		for (IDownloadManagerObserver o : observers) {
 			o.onNotifyDownloadSuccess(url);
 		}
+
+		downloaders.remove(url);
 	}
 
 	@Override
@@ -196,14 +229,17 @@ public class DownloadManager implements IDownloadObserver, IDownloadManager {
 		for (IDownloadManagerObserver o : observers) {
 			o.onNotifyDownloadFailed(url);
 		}
+
+		downloaders.remove(url);
 	}
 
 	@Override
 	public void notifyFileAlreadyExist(String url) {
 		for (IDownloadManagerObserver o : observers) {
-			o.onNotifyFileAlreadyExist(url);
+			o.onNotifyFileAlreadyFinishedDownloading(url);
 		}
 
+		downloaders.remove(url);
 	}
 
 	@Override

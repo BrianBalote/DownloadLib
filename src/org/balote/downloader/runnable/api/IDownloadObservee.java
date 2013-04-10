@@ -12,5 +12,5 @@ public interface IDownloadObservee {
 
 	public void notifyFailedDownload();
 	
-	public void notifyFileAlreadyExist();
+	public void notifyFileAlreadyFinishedDownloading();
 }

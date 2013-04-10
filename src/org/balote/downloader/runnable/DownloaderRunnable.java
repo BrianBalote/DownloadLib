@@ -112,7 +112,7 @@ public class DownloaderRunnable implements IDownloadObservee,
 				if (contentLength == downloadedFileLength) {
 
 					terminate();
-					notifyFileAlreadyExist();
+					notifyFileAlreadyFinishedDownloading();
 
 				} else {
 
@@ -325,7 +325,7 @@ public class DownloaderRunnable implements IDownloadObservee,
 	}
 
 	@Override
-	public void notifyFileAlreadyExist() {
+	public void notifyFileAlreadyFinishedDownloading() {
 
 		Log.w(TAG, "notifyFileAlreadyExist()");
 

@@ -1,10 +1,12 @@
 package org.balote.downloader.manager.api;
 
+import org.balote.downloader.db.exceptions.FileIsAlreadyDownloadingException;
+
 
 public interface IDownloadManager {
 
 	public void initiateSingleDownload(String fileUrl, String filePath,
-			String contentType);
+			String contentType) throws FileIsAlreadyDownloadingException;
 
 	public void terminateRunnables();
 

@@ -6,6 +6,6 @@ public interface IDownloadManagerObserver {
 	
 	public void onNotifyDownloadFailed(String url);
 	
-	public void onNotifyFileAlreadyExist(String url);
+	public void onNotifyFileAlreadyFinishedDownloading(String url);
 	
 }

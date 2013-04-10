@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.balote.downloader.db.RetryDownloadsDao;
-import org.balote.downloader.db.exceptions.FileIsAlreadyDownloadingException;
+import org.balote.downloader.exceptions.FileIsAlreadyDownloadingException;
 import org.balote.downloader.manager.api.IDownloadManager;
 import org.balote.downloader.manager.api.IDownloadManagerObserver;
 import org.balote.downloader.models.api.IDownloadDataModel;

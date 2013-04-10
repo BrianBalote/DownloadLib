@@ -1,6 +1,6 @@
 package org.balote.downloader.manager.api;
 
-import org.balote.downloader.db.exceptions.FileIsAlreadyDownloadingException;
+import org.balote.downloader.exceptions.FileIsAlreadyDownloadingException;
 
 
 public interface IDownloadManager {

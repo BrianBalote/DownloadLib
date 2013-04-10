@@ -1,4 +1,4 @@
-package org.balote.downloader.db.exceptions;
+package org.balote.downloader.exceptions;
 
 public class FileIsAlreadyDownloadingException extends Exception {
 
